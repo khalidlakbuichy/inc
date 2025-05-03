@@ -14,13 +14,14 @@ fi
 # Start MySQL service temporarily to setup users
 /usr/bin/mysqld_safe --user=mysql &
 
-# Wait for MySQL to start
+# Wait for MySQL to start up properly
+echo "Waiting for MySQL server to start..."
 until mysqladmin ping &>/dev/null; do
-    echo "Waiting for MySQL server to start..."
-    sleep 1
+    sleep 2
 done
+echo "MySQL is up and running"
 
-# Setup database and users
+# Make sure the database and users are created
 echo "Creating database and users..."
 mysql -u root << EOF
 CREATE DATABASE IF NOT EXISTS ${MYSQL_DATABASE};
@@ -29,6 +30,9 @@ GRANT ALL PRIVILEGES ON ${MYSQL_DATABASE}.* TO '${MYSQL_USER}'@'%';
 ALTER USER 'root'@'localhost' IDENTIFIED BY '${MYSQL_ROOT_PASSWORD}';
 FLUSH PRIVILEGES;
 EOF
+
+# Print status for debugging
+mysql -u root -p${MYSQL_ROOT_PASSWORD} -e "SHOW DATABASES; SELECT User, Host FROM mysql.user;"
 
 # Stop the temporary MySQL instance
 mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} shutdown

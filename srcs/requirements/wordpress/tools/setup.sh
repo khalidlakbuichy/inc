@@ -3,12 +3,31 @@
 # Create necessary directories for PHP-FPM
 mkdir -p /run/php
 
-# Wait for MariaDB to be ready
+# Wait for MariaDB to be ready with better error handling
 echo "Waiting for MariaDB to be ready..."
-while ! mariadb -h mariadb -u ${MYSQL_USER} -p${MYSQL_PASSWORD} ${MYSQL_DATABASE} -e "SELECT 1" >/dev/null 2>&1; do
-    sleep 1
+max_attempts=30
+attempt=0
+
+while [ $attempt -lt $max_attempts ]; do
+    if mariadb -h mariadb -u ${MYSQL_USER} -p${MYSQL_PASSWORD} -e "SHOW DATABASES;" &>/dev/null; then
+        echo "Successfully connected to MariaDB!"
+        break
+    fi
+    
+    attempt=$((attempt+1))
+    echo "Attempt $attempt/$max_attempts: MariaDB not ready yet, waiting..."
+    sleep 5
+    
+    if [ $attempt -eq $max_attempts ]; then
+        echo "Error: Could not connect to MariaDB after $max_attempts attempts"
+        echo "Debug information:"
+        echo "- Trying to connect to host: mariadb"
+        echo "- Using user: ${MYSQL_USER}"
+        echo "- Database target: ${MYSQL_DATABASE}"
+        ping -c 3 mariadb || echo "Cannot ping mariadb host"
+        exit 1
+    fi
 done
-echo "MariaDB is ready!"
 
 # Check if WordPress is already installed
 if [ ! -f "/var/www/html/wp-config.php" ]; then
@@ -20,7 +39,11 @@ if [ ! -f "/var/www/html/wp-config.php" ]; then
         --dbname=${MYSQL_DATABASE} \
         --dbuser=${MYSQL_USER} \
         --dbpass=${MYSQL_PASSWORD} \
-        --dbhost=mariadb
+        --dbhost=mariadb \
+        --extra-php <<PHP
+define('WP_DEBUG', true);
+define('WP_DEBUG_LOG', true);
+PHP
     
     echo "Installing WordPress..."
     wp core install --allow-root \
@@ -35,10 +58,6 @@ if [ ! -f "/var/www/html/wp-config.php" ]; then
         ${WP_USER} ${WP_USER_EMAIL} \
         --user_pass=${WP_USER_PASSWORD} \
         --role=author
-    
-    echo "Setting up Redis cache..."
-    wp plugin install redis-cache --activate --allow-root
-    wp redis enable --allow-root
     
     echo "WordPress setup completed!"
 else
