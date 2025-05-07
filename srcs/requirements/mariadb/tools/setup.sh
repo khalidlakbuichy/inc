@@ -39,5 +39,5 @@ mysqladmin -u root -p${MYSQL_ROOT_PASSWORD} shutdown
 
 echo "MariaDB setup completed!"
 
-# Execute the command passed as parameter
+# Execute the command passed as parameter in CMD ["mysqld_safe"]
 exec "$@"

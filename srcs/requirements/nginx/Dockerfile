@@ -24,4 +24,8 @@ RUN mkdir -p /var/www/html && \
 
 EXPOSE 443
 
+#This is a directive passed to NGINX to disable backgrounding.
+#By default, NGINX daemonizes (i.e., runs in the background) when started.
+#In Docker, this is a problem, because Docker expects the main process to stay in the foreground
+
 CMD ["nginx", "-g", "daemon off;"]

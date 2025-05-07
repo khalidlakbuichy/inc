@@ -11,5 +11,5 @@ docker volume rm $(docker volume ls -q)
 sudo rm -rf /home/$USER/data/wordpress/*
 sudo rm -rf /home/$USER/data/mariadb/*
 
-# Rebuild everything
+# build everything
 make
