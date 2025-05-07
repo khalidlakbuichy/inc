@@ -1,5 +1,6 @@
 services:
   mariadb:
+    image: "mariadb:1337"
     build:
       context: ./requirements/mariadb
     container_name: mariadb
@@ -17,6 +18,7 @@ services:
       retries: 5
 
   wordpress:
+    image: "wordpress:1337"
     build:
       context: ./requirements/wordpress
     container_name: wordpress
@@ -32,6 +34,7 @@ services:
     restart: always
 
   nginx:
+    image: "nginx:1337"
     build:
       context: ./requirements/nginx
     container_name: nginx
@@ -43,6 +46,8 @@ services:
       - inception_network
     depends_on:
       - wordpress
+    env_file:
+      - .env
     restart: always
 
 networks:

@@ -18,6 +18,9 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 # Copy Nginx configuration
 COPY ./conf/nginx.conf /etc/nginx/sites-available/default
 
+COPY ./tools/setup.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/setup.sh
+
 # Create directory for WordPress files
 RUN mkdir -p /var/www/html && \
     chown -R www-data:www-data /var/www/html
@@ -28,4 +31,5 @@ EXPOSE 443
 #By default, NGINX daemonizes (i.e., runs in the background) when started.
 #In Docker, this is a problem, because Docker expects the main process to stay in the foreground
 
+ENTRYPOINT ["/usr/local/bin/setup.sh"]
 CMD ["nginx", "-g", "daemon off;"]
